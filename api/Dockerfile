@@ -12,7 +12,8 @@ RUN pip install --no-cache-dir .
 COPY scripts/ scripts/
 COPY data/ data/
 
-RUN chown -R appuser:appuser /app
+RUN mkdir -p /app/data/vectorstore && \
+    chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 3456
