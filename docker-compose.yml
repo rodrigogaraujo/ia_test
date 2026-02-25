@@ -1,0 +1,47 @@
+services:
+  api:
+    build: ./api
+    ports:
+      - "3456:3456"
+    env_file:
+      - ./api/.env
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - vectorstore_data:/app/data/vectorstore
+    healthcheck:
+      test: ["CMD", "python", "scripts/healthcheck.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  web:
+    build:
+      context: ./web
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:3456
+    ports:
+      - "3457:3457"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
+  vectorstore_data:
