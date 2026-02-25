@@ -23,7 +23,7 @@ services:
     build:
       context: ./web
       args:
-        - NEXT_PUBLIC_API_URL=http://localhost:3456
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3456}
     ports:
       - "3457:3457"
     depends_on:
