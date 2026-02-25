@@ -215,6 +215,7 @@ Todo o desenvolvimento foi feito com **Claude Code** (Anthropic Claude Opus 4), 
 | **Claude Memory MCP** (`claude-mem`) | Persistência de contexto e decisões entre sessões | Indexou 50+ observações (143k tokens de trabalho investido). Permitiu retomar o projeto entre sessões sem perder contexto de decisões arquiteturais, bugs resolvidos e patterns escolhidos. Usado via `mcp-search`, `timeline` e `get_observations` |
 | **Speckit** (skill-based workflow) | Gestão estruturada do ciclo de desenvolvimento | Pipeline completo: constitution → specify → clarify → plan → tasks → implement. Cada etapa gera artefatos que alimentam a próxima |
 | **Web Search** | Pesquisa de documentação atualizada | Pesquisa de best practices para LangGraph, langgraph-checkpoint-redis, FAISS patterns e FastAPI async patterns |
+| **GitHub MCP** (`gh` CLI) | Gerenciamento do repositório GitHub | Push de branches, criação de PRs com descrição detalhada ([PR #1](https://github.com/rodrigogaraujo/ia_test/pull/1) gerado automaticamente com arquitetura, endpoints, stack e test plan), configuração de default branch — tudo sem sair do terminal |
 
 ### Ferramentas nativas do Claude Code utilizadas
 
@@ -268,10 +269,11 @@ Todo o desenvolvimento foi feito com **Claude Code** (Anthropic Claude Opus 4), 
 - 3 agentes pesquisaram simultaneamente: AsyncRedisSaver patterns, FAISS com LangChain patterns, e LangGraph StateGraph best practices
 - Resultados consolidados em research.md com Decision/Rationale/Alternatives para cada tópico
 
-**Git & GitHub (via `gh` CLI):**
+**Git & GitHub (via GitHub MCP / `gh` CLI):**
 - 14 commits incrementais criados automaticamente pela IA, organizados na ordem lógica do desenvolvimento (setup → specs → config → RAG → tools → agents → API → tests → Docker → frontend → docs)
-- Push da branch `001-multi-agent-travel` e criação do PR #1 com descrição detalhada (arquitetura, endpoints, stack, test plan) — tudo via `gh pr create`
+- Push da branch e criação do [PR #1](https://github.com/rodrigogaraujo/ia_test/pull/1) com descrição detalhada (arquitetura, endpoints, stack, test plan) — tudo via `gh pr create`
 - Configuração da default branch via `gh repo edit`
+- Exemplo do PR gerado: **[feat: Multi-Agent Travel Assistant com LangGraph, RAG e Web Search](https://github.com/rodrigogaraujo/ia_test/pull/1)**
 
 ### O que funcionou bem
 
