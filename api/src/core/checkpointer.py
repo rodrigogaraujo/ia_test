@@ -12,8 +12,14 @@ async def create_checkpointer(redis_url: str):
     try:
         from langgraph.checkpoint.redis.aio import AsyncRedisSaver
 
-        checkpointer = AsyncRedisSaver.from_conn_string(redis_url)
-        await checkpointer.asetup()
+        saver = AsyncRedisSaver.from_conn_string(redis_url)
+        # Newer versions return an async context manager
+        if hasattr(saver, '__aenter__'):
+            checkpointer = await saver.__aenter__()
+        else:
+            checkpointer = saver
+            if hasattr(checkpointer, 'asetup'):
+                await checkpointer.asetup()
         return checkpointer
     except Exception as e:
         logger.warning("Redis checkpointer failed, using MemorySaver", error=str(e))

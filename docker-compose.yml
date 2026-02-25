@@ -10,8 +10,6 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-    volumes:
-      - vectorstore_data:/app/data/vectorstore
     healthcheck:
       test: ["CMD", "python", "scripts/healthcheck.py"]
       interval: 30s
@@ -44,4 +42,3 @@ services:
 
 volumes:
   redis_data:
-  vectorstore_data:
