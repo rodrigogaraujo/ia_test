@@ -224,6 +224,7 @@ Todo o desenvolvimento foi feito com **Claude Code** (Anthropic Claude Opus 4), 
 | **Grep** | Busca de patterns no codebase (imports, referências, TODO markers) |
 | **Bash/Terminal** | Execução de comandos: pip install, pytest, docker compose, uvicorn, npm |
 | **Git** (via Bash) | Commits incrementais, diffs, gerenciamento de branches |
+| **GitHub CLI** (`gh`) | Push de branches, criação de PR detalhado com descrição completa, configuração do repositório remoto |
 | **Task** (subagents) | 3 agentes de pesquisa paralelos na fase de planning (Redis, FAISS, LangGraph) |
 
 ### Processo de desenvolvimento
@@ -266,6 +267,11 @@ Todo o desenvolvimento foi feito com **Claude Code** (Anthropic Claude Opus 4), 
 **Pesquisa (via subagents paralelos):**
 - 3 agentes pesquisaram simultaneamente: AsyncRedisSaver patterns, FAISS com LangChain patterns, e LangGraph StateGraph best practices
 - Resultados consolidados em research.md com Decision/Rationale/Alternatives para cada tópico
+
+**Git & GitHub (via `gh` CLI):**
+- 14 commits incrementais criados automaticamente pela IA, organizados na ordem lógica do desenvolvimento (setup → specs → config → RAG → tools → agents → API → tests → Docker → frontend → docs)
+- Push da branch `001-multi-agent-travel` e criação do PR #1 com descrição detalhada (arquitetura, endpoints, stack, test plan) — tudo via `gh pr create`
+- Configuração da default branch via `gh repo edit`
 
 ### O que funcionou bem
 
