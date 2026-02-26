@@ -6,13 +6,18 @@ import json
 from datetime import datetime, timezone
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sse_starlette.sse import EventSourceResponse
 
 from src.api.dependencies import get_graph, get_settings
 from src.api.schemas import ChatRequest, ChatResponse, Source
 from src.config import Settings
+
+limiter = Limiter(key_func=get_remote_address)
+"""Rate limiter: 20 requests/minute per IP on chat endpoints."""
 
 logger = structlog.get_logger()
 
@@ -20,23 +25,25 @@ router = APIRouter()
 
 
 @router.post("/chat", response_model=ChatResponse)
+@limiter.limit("20/minute")
 async def chat(
-    request: ChatRequest,
+    request: Request,
+    body: ChatRequest,
     graph=Depends(get_graph),
     settings: Settings = Depends(get_settings),
 ):
     """Process a chat message and return the response."""
     await logger.ainfo(
         "Chat request received",
-        session_id=request.session_id,
-        message_length=len(request.message),
+        session_id=body.session_id,
+        message_length=len(body.message),
     )
 
     try:
-        config = {"configurable": {"thread_id": request.session_id}}
+        config = {"configurable": {"thread_id": body.session_id}}
         initial_state = {
             "messages": [],
-            "user_query": request.message,
+            "user_query": body.message,
             "route": "",
             "faq_response": None,
             "search_response": None,
@@ -53,7 +60,7 @@ async def chat(
         sources = [Source(**s) for s in raw_sources if isinstance(s, dict)]
 
         return ChatResponse(
-            session_id=request.session_id,
+            session_id=body.session_id,
             response=result.get("final_response", ""),
             agent_used=agent_used,
             sources=sources,
@@ -66,7 +73,9 @@ async def chat(
 
 
 @router.get("/chat/stream")
+@limiter.limit("20/minute")
 async def chat_stream(
+    request: Request,
     session_id: str = Query(..., min_length=1, max_length=128),
     message: str = Query(..., min_length=1, max_length=4096),
     graph=Depends(get_graph),
