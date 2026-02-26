@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import structlog
 
-from src.rag.prompts import SEARCH_AGENT_PROMPT
+from src.rag.prompts import SEARCH_AGENT_SYSTEM
 
 if TYPE_CHECKING:
     from langchain_openai import ChatOpenAI
@@ -52,10 +52,13 @@ async def run_search_agent(
 
     search_text = "\n\n---\n\n".join(search_parts) if search_parts else "Nenhum resultado encontrado."
 
-    from langchain_core.messages import HumanMessage
+    from langchain_core.messages import HumanMessage, SystemMessage
 
-    prompt = SEARCH_AGENT_PROMPT.format(search_results=search_text, user_query=user_query)
-    response = await llm.ainvoke([HumanMessage(content=prompt)])
+    system_prompt = SEARCH_AGENT_SYSTEM.format(search_results=search_text)
+    response = await llm.ainvoke([
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=user_query),
+    ])
 
     await logger.ainfo("Search agent completed", results_found=len(results))
     return {

@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     # Web Search
     tavily_api_key: SecretStr
 
+    # CORS
+    allowed_origins: str = "http://localhost:3457"
+
     # Redis
     redis_url: str = "redis://localhost:6379"
 
