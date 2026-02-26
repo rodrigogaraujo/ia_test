@@ -6,7 +6,7 @@ services:
     env_file:
       - ./api/.env
     environment:
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-blisTravel2026!}@redis:6379
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
     depends_on:
       redis:
         condition: service_healthy
@@ -31,9 +31,9 @@ services:
   redis:
     image: redis/redis-stack-server:latest
     environment:
-      - REDIS_ARGS=--requirepass ${REDIS_PASSWORD:-blisTravel2026!}
+      - REDIS_ARGS=--requirepass ${REDIS_PASSWORD}
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-blisTravel2026!}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
