@@ -5,11 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Literal
 
 import structlog
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
 
-from src.rag.prompts import CLASSIFY_INTENT_PROMPT, SYNTHESIZER_PROMPT
+from src.rag.prompts import CLASSIFY_INTENT_SYSTEM, SYNTHESIZER_SYSTEM
 from src.state.graph_state import AgentRoute, GraphState
 
 if TYPE_CHECKING:
@@ -31,8 +31,10 @@ def build_graph(settings: Settings, vectorstore: FAISS | None, checkpointer=None
     async def classify_intent(state: GraphState) -> dict:
         """Classify user query intent into FAQ, SEARCH, or BOTH."""
         user_query = state["user_query"]
-        prompt = CLASSIFY_INTENT_PROMPT.format(user_query=user_query)
-        response = await llm.ainvoke([HumanMessage(content=prompt)])
+        response = await llm.ainvoke([
+            SystemMessage(content=CLASSIFY_INTENT_SYSTEM),
+            HumanMessage(content=user_query),
+        ])
         route_text = response.content.strip().upper()
 
         if route_text not in ("FAQ", "SEARCH", "BOTH"):
@@ -60,12 +62,14 @@ def build_graph(settings: Settings, vectorstore: FAISS | None, checkpointer=None
         search_resp = state.get("search_response")
 
         if route == AgentRoute.BOTH and faq_resp and search_resp:
-            prompt = SYNTHESIZER_PROMPT.format(
+            system_prompt = SYNTHESIZER_SYSTEM.format(
                 faq_response=faq_resp,
                 search_response=search_resp,
-                user_query=state["user_query"],
             )
-            response = await llm.ainvoke([HumanMessage(content=prompt)])
+            response = await llm.ainvoke([
+                SystemMessage(content=system_prompt),
+                HumanMessage(content=state["user_query"]),
+            ])
             final = response.content
         elif faq_resp:
             final = faq_resp

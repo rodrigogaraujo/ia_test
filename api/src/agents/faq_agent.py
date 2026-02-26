@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import structlog
 
-from src.rag.prompts import FAQ_AGENT_PROMPT
+from src.rag.prompts import FAQ_AGENT_SYSTEM
 
 if TYPE_CHECKING:
     from langchain_community.vectorstores import FAISS
@@ -35,7 +35,7 @@ async def run_faq_agent(
             "sources": sources,
         }
 
-    from langchain_core.messages import HumanMessage
+    from langchain_core.messages import HumanMessage, SystemMessage
 
     from src.rag.vectorstore import get_retriever
 
@@ -59,8 +59,11 @@ async def run_faq_agent(
 
     context = "\n\n---\n\n".join(context_parts) if context_parts else "Nenhum documento relevante encontrado."
 
-    prompt = FAQ_AGENT_PROMPT.format(context=context, user_query=user_query)
-    response = await llm.ainvoke([HumanMessage(content=prompt)])
+    system_prompt = FAQ_AGENT_SYSTEM.format(context=context)
+    response = await llm.ainvoke([
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=user_query),
+    ])
 
     await logger.ainfo("FAQ agent completed", docs_found=len(docs))
     return {
