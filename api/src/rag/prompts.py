@@ -54,10 +54,3 @@ Informações do manual de políticas:
 
 Informações da busca web:
 {search_response}"""
-
-# --- Legacy format-style templates (kept for backward compatibility) ---
-
-CLASSIFY_INTENT_PROMPT = CLASSIFY_INTENT_SYSTEM + "\n\nPergunta do usuário: {user_query}"
-FAQ_AGENT_PROMPT = FAQ_AGENT_SYSTEM + "\n\nPergunta: {user_query}"
-SEARCH_AGENT_PROMPT = SEARCH_AGENT_SYSTEM + "\n\nPergunta: {user_query}"
-SYNTHESIZER_PROMPT = SYNTHESIZER_SYSTEM + "\n\nPergunta original: {user_query}"
