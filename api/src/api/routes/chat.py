@@ -40,9 +40,11 @@ async def chat(
     )
 
     try:
+        from langchain_core.messages import HumanMessage
+
         config = {"configurable": {"thread_id": body.session_id}}
         initial_state = {
-            "messages": [],
+            "messages": [HumanMessage(content=body.message)],
             "user_query": body.message,
             "route": "",
             "faq_response": None,
@@ -85,9 +87,11 @@ async def chat_stream(
 
     async def event_generator():
         try:
+            from langchain_core.messages import HumanMessage
+
             config = {"configurable": {"thread_id": session_id}}
             initial_state = {
-                "messages": [],
+                "messages": [HumanMessage(content=message)],
                 "user_query": message,
                 "route": "",
                 "faq_response": None,
@@ -101,6 +105,10 @@ async def chat_stream(
                 initial_state, config=config, version="v2"
             ):
                 if event["event"] == "on_chat_model_stream":
+                    # Filter out classify_intent tokens (route labels leak)
+                    node = event.get("metadata", {}).get("langgraph_node", "")
+                    if node == "classify_intent":
+                        continue
                     token = event["data"]["chunk"].content
                     if token:
                         yield {

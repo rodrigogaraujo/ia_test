@@ -60,10 +60,13 @@ async def run_faq_agent(
     context = "\n\n---\n\n".join(context_parts) if context_parts else "Nenhum documento relevante encontrado."
 
     system_prompt = FAQ_AGENT_SYSTEM.format(context=context)
-    response = await llm.ainvoke([
-        SystemMessage(content=system_prompt),
-        HumanMessage(content=user_query),
-    ])
+    # Build messages with conversation history for context continuity
+    history = state.get("messages", [])
+    llm_messages: list = [SystemMessage(content=system_prompt)]
+    for msg in history[:-1]:  # Previous conversation turns
+        llm_messages.append(msg)
+    llm_messages.append(HumanMessage(content=user_query))
+    response = await llm.ainvoke(llm_messages)
 
     await logger.ainfo("FAQ agent completed", docs_found=len(docs))
     return {
