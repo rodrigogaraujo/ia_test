@@ -45,10 +45,12 @@ Browser → Next.js (web:3457) → FastAPI (api:3456) → Orchestrator (LangGrap
 ### 1. Clone e configure
 
 ```bash
-git clone <repo-url>
-cd blis-travel-agents
+git clone https://github.com/rodrigogaraujo/ia_test.git
+cd ia_test
 cp api/.env.example api/.env
-# Edite api/.env com suas API keys
+cp .env.example .env
+# Edite api/.env com suas API keys (OPENAI_API_KEY, TAVILY_API_KEY)
+# Edite .env com uma REDIS_PASSWORD forte
 ```
 
 ### 2. Suba com Docker Compose
@@ -64,7 +66,7 @@ Serviços e portas:
 | Frontend (Next.js) | 3457 | http://localhost:3457 |
 | API (FastAPI) | 3456 | http://localhost:3456 |
 | Swagger/OpenAPI | 3456 | http://localhost:3456/docs |
-| Redis | 6380 | redis://localhost:6380 |
+| Redis | interno | Acessível apenas dentro do Docker network |
 
 ### 3. Ingestão do PDF
 
@@ -85,6 +87,23 @@ curl http://localhost:3456/health
 ### 5. Acesse o frontend
 
 Abra http://localhost:3457 no navegador.
+
+## Variáveis de Ambiente
+
+### `api/.env` (obrigatórias)
+
+| Variável | Descrição | Exemplo |
+|---|---|---|
+| `OPENAI_API_KEY` | API key da OpenAI | `sk-proj-...` |
+| `TAVILY_API_KEY` | API key do Tavily | `tvly-...` |
+| `ALLOWED_ORIGINS` | Origens CORS permitidas (comma-separated) | `http://localhost:3457` |
+
+### `.env` (raiz — para docker-compose)
+
+| Variável | Descrição | Exemplo |
+|---|---|---|
+| `REDIS_PASSWORD` | Senha do Redis (obrigatória) | Gere com `openssl rand -base64 32` |
+| `NEXT_PUBLIC_API_URL` | URL pública da API (build-time) | `http://localhost:3456` |
 
 ## Uso da API
 
@@ -129,8 +148,8 @@ cd api
 # Instalar dependências
 pip install -e ".[dev]"
 
-# Subir Redis
-docker run -d --name redis -p 6380:6379 redis:7-alpine
+# Subir Redis (precisa do Redis Stack para RediSearch)
+docker run -d --name redis -p 6379:6379 redis/redis-stack-server:latest
 
 # Ingerir documentos
 python scripts/ingest_documents.py
@@ -171,8 +190,7 @@ npm run dev
 │   │   │   ├── faq_agent.py    # RAG agent
 │   │   │   └── search_agent.py # Tavily agent
 │   │   ├── tools/
-│   │   │   ├── web_search.py   # Tavily wrapper
-│   │   │   └── rag_retriever.py
+│   │   │   └── web_search.py   # Tavily wrapper
 │   │   ├── rag/
 │   │   │   ├── ingest.py       # PDF → chunks → FAISS
 │   │   │   ├── vectorstore.py  # FAISS persistence
@@ -300,7 +318,7 @@ Todo o desenvolvimento foi feito com **Claude Code** (Anthropic Claude Opus 4), 
 | Retriever | MMR (k=5, fetch_k=25) | Diversidade nos resultados evitando redundância |
 | BOTH route | Sequencial (FAQ→Search→Synthesize) | Determinístico e mais simples que paralelo para 2 agentes |
 | Streaming | `astream_events(v2)` | API recomendada do LangGraph para SSE |
-| Portas | API:3456, Web:3457, Redis:6380 | Portas não-convencionais para evitar conflitos |
+| Portas | API:3456, Web:3457, Redis:interno | Redis não exposto externamente (segurança) |
 | Frontend | Next.js 15 standalone | Output standalone otimizado para Docker |
 
 ## Licença
