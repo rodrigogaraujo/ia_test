@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Literal
 
 import structlog
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
 
@@ -31,10 +31,16 @@ def build_graph(settings: Settings, vectorstore: FAISS | None, checkpointer=None
     async def classify_intent(state: GraphState) -> dict:
         """Classify user query intent into FAQ, SEARCH, or BOTH."""
         user_query = state["user_query"]
-        response = await llm.ainvoke([
-            SystemMessage(content=CLASSIFY_INTENT_SYSTEM),
-            HumanMessage(content=user_query),
-        ])
+        history = state.get("messages", [])
+
+        # Build messages: system + conversation history (for context) + current query
+        llm_messages: list = [SystemMessage(content=CLASSIFY_INTENT_SYSTEM)]
+        # Include recent history so the classifier understands follow-up questions
+        for msg in history[:-1]:  # All except current (last) message
+            llm_messages.append(msg)
+        llm_messages.append(HumanMessage(content=user_query))
+
+        response = await llm.ainvoke(llm_messages)
         route_text = response.content.strip().upper()
 
         if route_text not in ("FAQ", "SEARCH", "BOTH"):
@@ -79,7 +85,10 @@ def build_graph(settings: Settings, vectorstore: FAISS | None, checkpointer=None
             final = "Desculpe, não consegui processar sua pergunta no momento."
 
         await logger.ainfo("Response synthesized", route=route)
-        return {"final_response": final}
+        return {
+            "final_response": final,
+            "messages": [AIMessage(content=final)],
+        }
 
     def route_by_intent(state: GraphState) -> Literal["faq_agent", "search_agent", "both_faq"]:
         """Route to appropriate agent based on classified intent."""

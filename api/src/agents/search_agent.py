@@ -55,10 +55,13 @@ async def run_search_agent(
     from langchain_core.messages import HumanMessage, SystemMessage
 
     system_prompt = SEARCH_AGENT_SYSTEM.format(search_results=search_text)
-    response = await llm.ainvoke([
-        SystemMessage(content=system_prompt),
-        HumanMessage(content=user_query),
-    ])
+    # Build messages with conversation history for context continuity
+    history = state.get("messages", [])
+    llm_messages: list = [SystemMessage(content=system_prompt)]
+    for msg in history[:-1]:  # Previous conversation turns
+        llm_messages.append(msg)
+    llm_messages.append(HumanMessage(content=user_query))
+    response = await llm.ainvoke(llm_messages)
 
     await logger.ainfo("Search agent completed", results_found=len(results))
     return {

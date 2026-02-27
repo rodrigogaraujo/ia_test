@@ -122,15 +122,19 @@ def create_app() -> FastAPI:
         redis_connected = False
         vectorstore_loaded = application.state.vectorstore is not None
 
+        # Real ping to Redis instead of just isinstance check
         checkpointer = application.state.checkpointer
         if checkpointer is not None:
             try:
                 from langgraph.checkpoint.memory import MemorySaver
 
                 if not isinstance(checkpointer, MemorySaver):
+                    # Try actual Redis ping via the checkpointer's connection
+                    if hasattr(checkpointer, "conn") and checkpointer.conn is not None:
+                        await checkpointer.conn.ping()
                     redis_connected = True
             except Exception:
-                pass
+                redis_connected = False
 
         status = "healthy" if redis_connected and vectorstore_loaded else "degraded"
 
